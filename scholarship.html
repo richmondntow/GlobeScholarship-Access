@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Scholarship Availability Map</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script> 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+        }
+        .country {
+            stroke: #ffffff;
+            stroke-width: 0.5px;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 5px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<h2>World Scholarship Availability Map</h2>
+<svg id="map"></svg>
+<div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+
+<script>
+   
+    const width = 960, height = 600;
+
+    
+    const projection = d3.geoMercator()
+        .scale(150)
+        .translate([width / 2, height / 2]);
+
+    
+    const path = d3.geoPath().projection(projection);
+
+    
+    const colorScale = d3.scaleOrdinal()
+        .domain([true, false])
+        .range(["#2ca02c", "#ccc"]); 
+
+    
+    const svg = d3.select("#map")
+        .attr("width", width)
+        .attr("height", height);
+
+    
+    const scholarshipData = {
+        "USA": true, "CAN": true, "GBR": true, "FRA": false, "BRA": false,
+        "IND": true, "CHN": false, "RUS": true, "ZAF": false, "AUS": true
+        
+    };
+
+    
+    d3.json('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson').then(function(world) {
+
+        
+        svg.append("g")
+            .selectAll("path")
+            .data(world.features) 
+            .enter().append("path")
+            .attr("class", "country")
+            .attr("d", path)
+            .attr("fill", function(d) {
+                const countryCode = d.id;  
+                const hasScholarship = scholarshipData[d.id];
+                return hasScholarship !== undefined ? colorScale(hasScholarship) : "#ccc";  
+            })
+            .on("mouseover", function(event, d) {
+                const country = d.properties.name;
+                const hasScholarship = scholarshipData[d.id];
+                d3.select("#tooltip")
+                    .style("opacity", 1)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 20) + "px")
+                    .html(`Country: ${country}<br>Scholarships Available: ${hasScholarship ? 'Yes' : 'No'}`);
+            })
+            .on("mouseout", function() {
+                d3.select("#tooltip").style("opacity", 0);
+            });
+    });
+
+</script>
+
+</body>
+</html>
+
